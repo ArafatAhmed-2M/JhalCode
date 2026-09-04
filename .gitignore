@@ -1,0 +1,9 @@
+.env
+.jhalcode.env
+jhal-audit.jsonl
+jhal-audit.jsonl.1
+jhal-session.json
+.jhal-todos.json
+plan.md
+screenshot.png
+__pycache__/

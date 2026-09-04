@@ -1,0 +1,26 @@
+[project]
+name = "jhal-code"
+version = "0.3.0"
+description = "Jhal Code - human-like PC harness for AI agents (Windows-first)"
+requires-python = ">=3.10"
+dependencies = ["rich", "pyfiglet", "pyyaml", "prompt_toolkit"]
+
+[project.optional-dependencies]
+gui = ["pyautogui", "pillow", "mss"]
+browser = ["playwright"]
+all = ["pyautogui", "pillow", "mss", "playwright"]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+jhal-code = "jhalcode.cli:main"
+jcc = "jhalcode.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["jhalcode*"]
+
+[tool.ruff]
+line-length = 100
+

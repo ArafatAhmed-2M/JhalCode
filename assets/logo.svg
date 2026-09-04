@@ -1,0 +1,22 @@
+<svg width="560" height="340" viewBox="0 0 560 340" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bodyGrad" x1="20%" y1="0%" x2="90%" y2="100%">
+      <stop offset="0%" stop-color="#FF4B3E"/>
+      <stop offset="55%" stop-color="#E8291C"/>
+      <stop offset="100%" stop-color="#C21A10"/>
+    </linearGradient>
+    <linearGradient id="stemGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6BA53A"/>
+      <stop offset="100%" stop-color="#3F7A25"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(10,26)">
+    <path d="M 144,62 C 150,38 170,34 175,14 C 178,3 168,-3 156,4" fill="none" stroke="url(#stemGrad)" stroke-width="15" stroke-linecap="round"/>
+    <path d="M 133,60 C 163,66 191,90 200,128 C 209,170 193,212 158,244 C 120,280 72,301 24,314 C 10,318 -2,318 -8,314 C 0,301 17,290 36,276 C 75,247 107,215 122,180 C 134,151 134,116 125,87 C 120,70 122,63 133,60 Z" fill="url(#bodyGrad)"/>
+    <path d="M -8,314 C 0,301 17,290 36,276 C 75,247 107,215 122,180 C 128,167 131,152 131,138 C 138,168 132,202 108,232 C 80,268 40,292 6,308 C 0,311 -5,313 -8,314 Z" fill="#8A0F09" opacity="0.35"/>
+    <path d="M 152,78 C 168,94 175,118 170,142 C 167,160 158,175 148,185 C 152,166 156,148 156,129 C 156,111 154,94 152,78 Z" fill="#FF9B7A" opacity="0.75"/>
+  </g>
+  <text x="235" y="188" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-weight="800" font-size="58">
+    <tspan fill="#E8291C">Jhal</tspan><tspan fill="#1A1420" dx="16">Code</tspan>
+  </text>
+</svg>
