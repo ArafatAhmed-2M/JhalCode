@@ -1,0 +1,3 @@
+[console_scripts]
+jcc = jhalcode.cli:main
+jhal-code = jhalcode.cli:main

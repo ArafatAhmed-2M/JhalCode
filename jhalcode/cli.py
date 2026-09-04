@@ -47,15 +47,27 @@ def _connect(cfg) -> bool:
         return False
     base = (input(f"Base URL [{cfg.base_url}]: ").strip() or cfg.base_url).rstrip("/")
     try:
-        req = urllib.request.Request(f"{base}/models",
-            headers={"Authorization": f"Bearer {key}", "User-Agent": "Jhal-Code/0.2.0", "Accept": "application/json"})
-        with urllib.request.urlopen(req, timeout=30) as r:
-            n = len(json.loads(r.read().decode()).get("data", []))
+        if "openrouter" in base:
+            req = urllib.request.Request(f"{base}/auth/key",
+                headers={"Authorization": f"Bearer {key}", "User-Agent": "Jhal-Code/0.2.0", "Accept": "application/json"})
+            with urllib.request.urlopen(req, timeout=30) as r:
+                info = json.loads(r.read().decode()).get("data", {})
+            n = f"key ok ({info.get('label', 'no label')})"
+        else:
+            req = urllib.request.Request(f"{base}/models",
+                headers={"Authorization": f"Bearer {key}", "User-Agent": "Jhal-Code/0.2.0", "Accept": "application/json"})
+            with urllib.request.urlopen(req, timeout=30) as r:
+                n = f"{len(json.loads(r.read().decode()).get('data', []))} models"
     except Exception as e:
         print(f"key rejected: {str(e)[:150]}")
         return False
     cfg.api_key, cfg.base_url = key, base
+    cfg.models = ""
     os.environ["JHAL_API_KEY"], os.environ["JHAL_BASE_URL"] = key, base
+    try:
+        del os.environ["JHAL_MODELS"]
+    except KeyError:
+        pass
     try:
         p = os.path.join(os.path.expanduser("~"), ".jhalcode.env")
         lines = []
@@ -72,7 +84,8 @@ def _connect(cfg) -> bool:
                 winreg.SetValueEx(k, "JHAL_BASE_URL", 0, winreg.REG_SZ, base)
     except Exception as e:
         print(f"saved for session only: {str(e)[:100]}")
-    print(f"connected: {n} models · key ...{key[-4:]}")
+    print(f"connected: {n} · key ...{key[-4:]}")
+    print("note: model IDs are provider-specific — pick one from this provider")
     return True
 
 
@@ -195,6 +208,21 @@ def main():
         if task.startswith("/models"):
             from jhalcode import catalog as Cat
             _, _, v = task.partition(" ")
+            if "openrouter" in cfg.base_url:
+                import urllib.request, json
+                try:
+                    req = urllib.request.Request(f"{cfg.base_url.rstrip('/')}/models",
+                        headers={"Authorization": f"Bearer {cfg.api_key}", "User-Agent": "Jhal-Code/0.2.0"})
+                    with urllib.request.urlopen(req, timeout=30) as r:
+                        ids = sorted(m["id"] for m in json.loads(r.read().decode()).get("data", []))
+                    if "free" in v:
+                        ids = [i for i in ids if i.endswith(":free")]
+                    for i in ids[:120]:
+                        print(f"  {i}")
+                    print(f"({len(ids)} total — use /model <id>)")
+                except Exception as e:
+                    print(f"catalog failed: {str(e)[:150]}")
+                continue
             try:
                 rows = Cat.table(free_only=("free" in v))
             except Exception as e:

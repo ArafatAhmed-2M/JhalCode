@@ -1,0 +1,22 @@
+Metadata-Version: 2.4
+Name: jhal-code
+Version: 0.3.0
+Summary: Jhal Code - human-like PC harness for AI agents (Windows-first)
+Requires-Python: >=3.10
+License-File: LICENSE
+Requires-Dist: rich
+Requires-Dist: pyfiglet
+Requires-Dist: pyyaml
+Requires-Dist: prompt_toolkit
+Provides-Extra: gui
+Requires-Dist: pyautogui; extra == "gui"
+Requires-Dist: pillow; extra == "gui"
+Requires-Dist: mss; extra == "gui"
+Provides-Extra: browser
+Requires-Dist: playwright; extra == "browser"
+Provides-Extra: all
+Requires-Dist: pyautogui; extra == "all"
+Requires-Dist: pillow; extra == "all"
+Requires-Dist: mss; extra == "all"
+Requires-Dist: playwright; extra == "all"
+Dynamic: license-file
