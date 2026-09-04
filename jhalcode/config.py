@@ -30,9 +30,9 @@ _load_dotenv()
 
 @dataclass
 class JhalConfig:
-    model: str = field(default_factory=lambda: os.getenv("JHAL_MODEL", "dots-studio/dots-3-note-preview:free"))
-    models: str = field(default_factory=lambda: os.getenv("JHAL_MODELS", "dots-studio/dots-3-note-preview:free,inclusionai/ling-3.0-flash-fin:free,poolside/laguna-s-2.1:free"))
-    base_url: str = field(default_factory=lambda: os.getenv("JHAL_BASE_URL", "https://openrouter.ai/api/v1"))
+    model: str = field(default_factory=lambda: os.getenv("JHAL_MODEL", "ling-3.0-flash-fin-free"))
+    models: str = field(default_factory=lambda: os.getenv("JHAL_MODELS", "ling-3.0-flash-fin-free,nemotron-3.5-lightning-free,nemotron-3-ultra-free"))
+    base_url: str = field(default_factory=lambda: os.getenv("JHAL_BASE_URL", "https://opencode.ai/zen/v1"))
     api_key: str = field(default_factory=lambda: os.getenv("JHAL_API_KEY", ""))
     auto_mode: bool = field(default_factory=lambda: os.getenv("JHAL_AUTO", "0").strip().lower() in ("1", "true", "yes"))
     max_steps: int = field(default_factory=lambda: _int(os.getenv("JHAL_MAX_STEPS", "30"), 30, 1, 200))

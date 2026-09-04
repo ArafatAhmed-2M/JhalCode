@@ -45,7 +45,8 @@ def _connect(cfg) -> bool:
     if not key:
         print("cancelled")
         return False
-    base = (input(f"Base URL [{cfg.base_url}]: ").strip() or cfg.base_url).rstrip("/")
+    guess = "https://openrouter.ai/api/v1" if key.startswith("sk-or-") else "https://opencode.ai/zen/v1"
+    base = (input(f"Base URL [{guess}]: ").strip() or guess).rstrip("/")
     try:
         if "openrouter" in base:
             req = urllib.request.Request(f"{base}/auth/key",
