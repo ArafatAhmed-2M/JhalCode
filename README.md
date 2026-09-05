@@ -67,4 +67,4 @@ even in `--auto`. Roles live in `jhalcode/roles.yaml`.
 
 ## License
 
-MIT — see LICENSE.
+Proprietary — all rights reserved. See LICENSE.

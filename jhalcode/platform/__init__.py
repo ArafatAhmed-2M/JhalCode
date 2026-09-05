@@ -1,8 +1,11 @@
 import platform
-from jhalcode.platform.windows import WindowsBackend
 
 def get_backend():
-    if platform.system() == "Windows":
+    sys = platform.system()
+    if sys == "Windows":
+        from jhalcode.platform.windows import WindowsBackend
         return WindowsBackend()
-    raise NotImplementedError("Jhal Code v0.1 is Windows-only. Linux/macOS backends plug in here.")
-
+    if sys in ("Linux", "Darwin"):
+        from jhalcode.platform.unix import UnixBackend
+        return UnixBackend()
+    raise NotImplementedError(f"Jhal Code has no backend for {sys} yet.")

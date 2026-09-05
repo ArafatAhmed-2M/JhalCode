@@ -13,8 +13,10 @@ RISK = {
 }
 BLOCK_SHELL = ("format ", "format.com", "mkfs", "dd if=", "shutdown ", "shutdown.exe", ":\\windows\\system32",
                "reg delete hklm", "vssadmin delete", "bcdedit /delete", "rd /s", "rmdir /s", "takeown",
-               "cipher /w", "del /s", "remove-item", "wmic shadowcopy delete")
-PROTECTED = ("c:\\windows", "c:\\program files", "c:\\program files (x86)")
+               "cipher /w", "del /s", "remove-item", "wmic shadowcopy delete",
+               "rm -rf /", ":(){", "shutdown -h", "shutdown now", "poweroff", "reboot")
+PROTECTED = ("c:\\windows", "c:\\program files", "c:\\program files (x86)",
+             "/etc", "/usr", "/bin", "/sbin", "/boot", "/sys", "/proc")
 
 
 def _norm(p: str) -> str:

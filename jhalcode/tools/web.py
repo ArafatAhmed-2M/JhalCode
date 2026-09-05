@@ -1,4 +1,4 @@
-import urllib.request, urllib.parse, html, os
+import urllib.request, urllib.parse, html, os, sys
 
 WEB_DEFS = [
     {"type": "function", "function": {"name": "web_search", "description": "Search web (DuckDuckGo), return titles+urls.",
@@ -27,11 +27,18 @@ def web_search(query: str) -> dict:
 EXEC_EXTS = {".exe", ".bat", ".cmd", ".ps1", ".vbs", ".msi", ".com", ".scr", ".reg", ".lnk", ".jar"}
 
 def open_file(path: str) -> dict:
+    import subprocess
     try:
         clean = urllib.parse.urlparse(path).path if "://" in path else path
         if os.path.splitext(clean)[1].lower() in EXEC_EXTS:
             return {"error": "executables blocked in open_file; use run_shell with approval"}
-        os.startfile(os.path.realpath(path))  # type: ignore
+        target = os.path.realpath(path)
+        if os.name == "nt":
+            os.startfile(target)  # type: ignore
+        elif sys.platform == "darwin":
+            subprocess.run(["open", target], timeout=15)
+        else:
+            subprocess.run(["xdg-open", target], timeout=15)
         return {"ok": True}
     except Exception as e:
         return {"error": str(e)[:300]}
