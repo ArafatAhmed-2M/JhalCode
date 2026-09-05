@@ -19,6 +19,9 @@ Then: `jcc` (restart the terminal first so PATH applies).
 
 From source (needs repo access): `git clone` + `python -m pip install -e .`.
 
+Update anytime: `pip install --force-reinstall https://github.com/ArafatAhmed-2M/JhalCode/archive/master.zip`
+(or `/update` inside jcc on Linux).
+
 Extras: `pip install "jhal-code[gui]"` (mouse/screenshot), `[browser]` (Playwright).
 
 On first run: `/connect` and paste your [OpenCode Zen](https://opencode.ai/zen) key.

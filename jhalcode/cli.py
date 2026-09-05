@@ -280,6 +280,20 @@ def main():
         if task == "/connect":
             _connect(cfg)
             continue
+        if task == "/update":
+            import subprocess
+            url = "https://github.com/ArafatAhmed-2M/JhalCode/archive/master.zip"
+            if os.name == "nt":
+                print(f"close jcc, then run: python -m pip install --force-reinstall {url}")
+                continue
+            try:
+                print("updating...")
+                subprocess.run(["python3", "-m", "pip", "install", "--force-reinstall", url],
+                               check=True, timeout=300)
+                print("updated — restart jcc to use it")
+            except Exception as e:
+                print(f"update failed: {str(e)[:150]}")
+            continue
         if task == "/audit":
             from collections import deque
             try:
