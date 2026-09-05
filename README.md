@@ -7,16 +7,17 @@ Type `jcc` and talk. That's it.
 
 ## Install
 
-Windows:
+Windows (one line):
 ```powershell
-powershell -ExecutionPolicy Bypass -File install.ps1
+powershell -c "irm https://raw.githubusercontent.com/ArafatAhmed-2M/JhalCode/master/install.ps1 | iex"
 ```
-Linux/macOS:
+Linux/macOS (one line):
 ```bash
-./install.sh
+curl -fsSL https://raw.githubusercontent.com/ArafatAhmed-2M/JhalCode/master/install.sh | bash
 ```
 Then: `jcc` (restart the terminal first so PATH applies).
-You'll be asked for a GitHub PAT once — the repo is private.
+
+From source (needs repo access): `git clone` + `python -m pip install -e .`.
 
 Extras: `pip install "jhal-code[gui]"` (mouse/screenshot), `[browser]` (Playwright).
 
