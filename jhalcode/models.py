@@ -24,10 +24,11 @@ class ModelClient:
             headers=headers,
             method="POST",
         )
-        import time as _t
         import urllib.error as ue
-        last = None
-        for attempt in range(4):
+        from jhalcode import retry as _R
+        from jhalcode import tui as _T
+
+        def _once():
             try:
                 with urllib.request.urlopen(req, timeout=120) as r:
                     return json.loads(r.read().decode())
@@ -36,20 +37,22 @@ class ModelClient:
                     body = e.read().decode()[:1000]
                 except Exception:
                     body = ""
-                if e.code == 429 and attempt < 3:
-                    wait = 2 * (2 ** attempt)
-                    try:
-                        wait = min(float(e.headers.get("retry-after", wait)), 30)
-                    except Exception:
-                        pass
-                    _t.sleep(wait)
-                    last = RuntimeError(f"HTTP {e.code}: {body}")
-                    continue
-                raise RuntimeError(f"HTTP {e.code}: {body}")
+                err = RuntimeError(f"HTTP {e.code}: {body}")
+                err.headers = getattr(e, "headers", {})  # type: ignore
+                raise err
             except (ue.URLError, TimeoutError, ConnectionError, OSError) as e:
-                last = RuntimeError(f"net error: {str(e)[:200]}")
-                _t.sleep(2 * (2 ** attempt))
-        raise last or RuntimeError("request failed")
+                raise RuntimeError(f"net error: {str(e)[:200]}")
+
+        def _notify(msg: str):
+            try:
+                _T.tool_line("retry", msg)
+            except Exception:
+                pass
+
+        try:
+            return _R.run(self.model, _once, notify=_notify)
+        except Exception as e:
+            raise RuntimeError(str(e)[:400])
 
 
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
