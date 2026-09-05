@@ -7,15 +7,22 @@ Type `jcc` and talk. That's it.
 
 ## Install
 
+Windows:
 ```powershell
-python -m pip install -e .
-jcc
+powershell -ExecutionPolicy Bypass -File install.ps1
 ```
+Linux/macOS:
+```bash
+./install.sh
+```
+Then: `jcc` (restart the terminal first so PATH applies).
+You'll be asked for a GitHub PAT once — the repo is private.
 
-Extras: `pip install -e .[gui]` (mouse/screenshot), `.[browser]` (Playwright).
+Extras: `pip install "jhal-code[gui]"` (mouse/screenshot), `[browser]` (Playwright).
 
 On first run: `/connect` and paste your [OpenCode Zen](https://opencode.ai/zen) key.
-Or copy `.env.example` to `.env`. Never commit `.env`.
+
+Developers: `git clone` + `python -m pip install -e .` — never commit `.env`.
 
 ## Usage
 
