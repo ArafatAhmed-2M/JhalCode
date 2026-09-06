@@ -172,11 +172,18 @@ def main():
             elif v:
                 if is_mgr:
                     roles = R.load()
-                    roles["manager"]["model"] = v
-                    R.save(roles)
-                    agent.roles = roles
-                    agent.set_model(v)
-                    print(f"manager -> {v} (saved)")
+                    if "manager" not in roles:
+                        print("manager role missing — using solo")
+                        cfg.model = v
+                        cfg.models = v
+                        agent.set_model(v)
+                        print(f"solo -> {v}")
+                    else:
+                        roles["manager"]["model"] = v
+                        R.save(roles)
+                        agent.roles = roles
+                        agent.set_model(v)
+                        print(f"manager -> {v} (saved)")
                 else:
                     cfg.model = v
                     cfg.models = v
