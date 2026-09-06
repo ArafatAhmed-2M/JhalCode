@@ -11,7 +11,7 @@ catch {
   $Headers.Authorization = "Bearer $t"
 }
 $zip = "$env:TEMP\jhalcode.zip"
-Invoke-WebRequest -Uri "https://api.github.com/repos/$Repo/zipball/master" -Headers $Headers -OutFile $zip
+Invoke-WebRequest -Uri "https://api.github.com/repos/$Repo/zipball/beta" -Headers $Headers -OutFile $zip
 python -m pip install "$zip"
 Remove-Item $zip -Force
 $scripts = Join-Path (Split-Path (Get-Command python).Source) "Scripts"
