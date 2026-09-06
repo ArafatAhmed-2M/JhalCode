@@ -107,8 +107,24 @@ def _preview(tool: str, args: dict) -> str:
         return str(args.get("content", ""))[:400]
     return ""
 
+def _diff_for(tool: str, args: dict) -> str:
+    if tool not in ("write_file", "edit_file"):
+        return ""
+    path = str(args.get("path", ""))
+    try:
+        old = open(path, encoding="utf-8").read() if os.path.isfile(path) else ""
+    except Exception:
+        old = ""
+    new = args.get("content", "") if tool == "write_file" else args.get("newString", "")
+    if tool == "edit_file":
+        old2 = args.get("oldString", "")
+        if old2 and old2 in old:
+            new = old.replace(old2, new, 1)
+    import jhalcode.tui as _T
+    return _T._diff(old, new, path)[:2000]
+
 def ask_user(tool: str, args: dict):
-    ans = T.approval(tool, _short(tool, args), risk_of(tool, args), _preview(tool, args))
+    ans = T.approval(tool, _short(tool, args), risk_of(tool, args), _preview(tool, args), _diff_for(tool, args))
     if ans in ("always", "auto"):
         return "always"
     return ans in ("y", "yes")

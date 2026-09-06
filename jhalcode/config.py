@@ -34,6 +34,7 @@ class JhalConfig:
     models: str = field(default_factory=lambda: os.getenv("JHAL_MODELS", "ling-3.0-flash-fin-free,nemotron-3.5-lightning-free,nemotron-3-ultra-free"))
     base_url: str = field(default_factory=lambda: os.getenv("JHAL_BASE_URL", "https://opencode.ai/zen/v1"))
     api_key: str = field(default_factory=lambda: os.getenv("JHAL_API_KEY", ""))
+    provider: str = field(default_factory=lambda: os.getenv("JHAL_PROVIDER", "zen"))
     auto_mode: bool = field(default_factory=lambda: os.getenv("JHAL_AUTO", "0").strip().lower() in ("1", "true", "yes"))
     max_steps: int = field(default_factory=lambda: _int(os.getenv("JHAL_MAX_STEPS", "30"), 30, 1, 200))
     workdir: str = field(default_factory=lambda: os.getenv("JHAL_WORKDIR", os.getcwd()))

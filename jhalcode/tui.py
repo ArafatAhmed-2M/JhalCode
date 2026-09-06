@@ -1,7 +1,50 @@
+import os as _os
+
 RED = "#E8291C"
 RED_LIGHT = "#FF4B3E"
 GREEN = "#6BA53A"
 INK = "#1A1420"
+
+def _theme_file() -> str:
+    return _os.path.join(_os.path.expanduser("~"), ".jhalcode.theme")
+
+def list_themes() -> dict:
+    import yaml
+    here = _os.path.dirname(_os.path.abspath(__file__))
+    for p in [_os.path.join(here, "themes.yaml"), _os.path.join(_os.getcwd(), "themes.yaml")]:
+        try:
+            if _os.path.isfile(p):
+                with open(p, encoding="utf-8") as f:
+                    return (yaml.safe_load(f) or {}).get("themes", {})
+        except Exception:
+            pass
+    return {}
+
+def set_theme(name: str) -> bool:
+    global RED, GREEN
+    themes = list_themes()
+    if name not in themes:
+        return False
+    t = themes[name]
+    RED = t.get("primary", RED)
+    GREEN = t.get("accent", GREEN)
+    try:
+        with open(_theme_file(), "w", encoding="utf-8") as f:
+            f.write(name)
+    except Exception:
+        pass
+    return True
+
+def current_theme() -> str:
+    try:
+        if _os.path.isfile(_theme_file()):
+            with open(_theme_file(), encoding="utf-8") as f:
+                return f.read().strip() or "jhal"
+    except Exception:
+        pass
+    return "jhal"
+
+set_theme(current_theme())
 
 try:
     from rich.console import Console
@@ -74,7 +117,7 @@ def _wordmark():
     except Exception:
         return [f"[bold {RED}]JHAL[/] [bold white]CODE[/]"]
 
-CMDS = "/connect /manager /roles /models /model /status /save /audit /clear /quit"
+CMDS = "/connect /theme /manager /roles /models /model /compact /cost /status /save /audit /clear /quit"
 
 def banner(auto: bool, model: str):
     import os
@@ -152,11 +195,22 @@ def thinking():
     from contextlib import nullcontext
     return nullcontext()
 
-def approval(tool: str, short: str, risk: str, preview: str = "") -> str:
+def _diff(old: str, new: str, path: str = "") -> str:
+    import difflib
+    a, b = old.splitlines()[:80], new.splitlines()[:80]
+    return "\n".join(difflib.unified_diff(a, b, fromfile="before", tofile=path or "after", lineterm="")) or "(no visible diff)"
+
+def approval(tool: str, short: str, risk: str, preview: str = "", diff: str = "") -> str:
     if RICH:
         from rich.markup import escape
+        from rich.syntax import Syntax
         color = GREEN if risk == "low" else "yellow" if risk == "medium" else RED
         body = f"[bold {color}]> {escape(tool)}[/] {escape(short)} [dim][{escape(risk)}][/]"
+        if diff:
+            body += f"\n[dim]{escape(preview[:200])}[/]" if preview else ""
+            console.print(Panel(body, box=box.ROUNDED, border_style=color))
+            console.print(Panel(Syntax(diff, "diff", theme="ansi_dark", word_wrap=True), title="change", border_style="dim"))
+            return Prompt.ask("[dim]Allow?[/]", choices=["y", "n", "always"], default="n").strip().lower()
         if preview:
             body += f"\n[dim]{escape(preview[:400])}[/]"
         console.print(Panel(body, box=box.ROUNDED, border_style=color))
@@ -174,7 +228,10 @@ except Exception:
     PT = False
 
 COMMANDS = {
-    "/connect": "connect Zen API key",
+    "/connect": "connect provider API key",
+    "/theme": "switch theme",
+    "/compact": "summarize and shrink context",
+    "/cost": "show token usage",
     "/manager": "orchestrate specialist team",
     "/solo": "single agent mode",
     "/roles": "list team roles + models",

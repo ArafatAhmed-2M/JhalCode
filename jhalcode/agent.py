@@ -90,6 +90,28 @@ class JhalAgent:
             self.messages = json.load(f)
         return len(self.messages)
 
+    def compact(self) -> str:
+        if len(self.messages) < 10:
+            return "too short to compact"
+        mid = len(self.messages) // 2
+        head = self.messages[1:mid]
+        summary = "Summary of earlier turns:\n" + "\n".join(str(m.get("content", ""))[:120] for m in head if m.get("role") in ("user", "assistant"))
+        try:
+            from jhalcode.models import ModelClient
+            c = ModelClient(self.cfg.base_url, self.cfg.api_key, self.model)
+            r = c.chat([{"role": "system", "content": "Summarize this conversation in under 200 words, keeping goals and decisions."},
+                        {"role": "user", "content": summary}])
+            summary = r["choices"][0]["message"].get("content", summary)
+        except Exception:
+            pass
+        self.messages = [self.messages[0], {"role": "user", "content": f"[compacted context]\n{summary}"}] + self.messages[mid:]
+        return f"compacted {len(head)} turns → {len(summary)} chars"
+
+    def cost(self) -> str:
+        u = getattr(self, "_usage", {"prompt_tokens": 0, "completion_tokens": 0})
+        total = u.get("prompt_tokens", 0) + u.get("completion_tokens", 0)
+        return f"prompt {u.get('prompt_tokens', 0)} + completion {u.get('completion_tokens', 0)} = {total} tokens"
+
     def _chat(self):
         models = [self.model] + [m for m in self.cfg.model_list() if m != self.model]
         errs = []

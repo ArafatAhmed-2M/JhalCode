@@ -32,39 +32,39 @@ def _run(agent, task: str):
         raise out["e"]
 
 def _connect(cfg) -> bool:
-    import urllib.request, json
+    from jhalcode import providers as Pv
     try:
         from prompt_toolkit import prompt as _pt
-        key = _pt("Zen API key: ", is_password=True).strip()
+        key = _pt("API key: ", is_password=True).strip()
     except Exception:
         try:
             import getpass
-            key = getpass.getpass("Zen API key: ").strip()
+            key = getpass.getpass("API key: ").strip()
         except Exception:
-            key = input("Zen API key: ").strip()
+            key = input("API key: ").strip()
     if not key:
         print("cancelled")
         return False
-    guess = "https://openrouter.ai/api/v1" if key.startswith("sk-or-") else "https://opencode.ai/zen/v1"
-    base = (input(f"Base URL [{guess}]: ").strip() or guess).rstrip("/")
+    detected = Pv.detect(key)
+    print("providers: " + ", ".join(f"{pid}{'*' if pid == detected else ''}" for pid in Pv.PRESETS))
+    pid = (input(f"Provider [{detected}]: ").strip() or detected).lower()
+    if pid not in Pv.PRESETS:
+        print(f"unknown provider (picked {detected})")
+        pid = detected
+    base = Pv.PRESETS[pid]["base"]
+    custom = input(f"Base URL [{base}]: ").strip()
+    if custom:
+        base = custom.rstrip("/")
     try:
-        if "openrouter" in base:
-            req = urllib.request.Request(f"{base}/auth/key",
-                headers={"Authorization": f"Bearer {key}", "User-Agent": "Jhal-Code/0.2.0", "Accept": "application/json"})
-            with urllib.request.urlopen(req, timeout=30) as r:
-                info = json.loads(r.read().decode()).get("data", {})
-            n = f"key ok ({info.get('label', 'no label')})"
-        else:
-            req = urllib.request.Request(f"{base}/models",
-                headers={"Authorization": f"Bearer {key}", "User-Agent": "Jhal-Code/0.2.0", "Accept": "application/json"})
-            with urllib.request.urlopen(req, timeout=30) as r:
-                n = f"{len(json.loads(r.read().decode()).get('data', []))} models"
+        n = Pv.check(pid, base, key)
     except Exception as e:
         print(f"key rejected: {str(e)[:150]}")
         return False
     cfg.api_key, cfg.base_url = key, base
     cfg.models = ""
+    cfg.provider = pid
     os.environ["JHAL_API_KEY"], os.environ["JHAL_BASE_URL"] = key, base
+    os.environ["JHAL_PROVIDER"] = pid
     try:
         del os.environ["JHAL_MODELS"]
     except KeyError:
@@ -74,8 +74,8 @@ def _connect(cfg) -> bool:
         lines = []
         if os.path.isfile(p):
             with open(p, encoding="utf-8") as f:
-                lines = [l for l in f.read().splitlines() if not l.startswith(("JHAL_API_KEY=", "JHAL_BASE_URL="))]
-        lines += [f"JHAL_API_KEY={key}", f"JHAL_BASE_URL={base}"]
+                lines = [l for l in f.read().splitlines() if not l.startswith(("JHAL_API_KEY=", "JHAL_BASE_URL=", "JHAL_PROVIDER="))]
+        lines += [f"JHAL_API_KEY={key}", f"JHAL_BASE_URL={base}", f"JHAL_PROVIDER={pid}"]
         with open(p, "w", encoding="utf-8") as f:
             f.write("\n".join(lines) + "\n")
         if os.name == "nt":
@@ -83,6 +83,7 @@ def _connect(cfg) -> bool:
             with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_SET_VALUE) as k:
                 winreg.SetValueEx(k, "JHAL_API_KEY", 0, winreg.REG_SZ, key)
                 winreg.SetValueEx(k, "JHAL_BASE_URL", 0, winreg.REG_SZ, base)
+                winreg.SetValueEx(k, "JHAL_PROVIDER", 0, winreg.REG_SZ, pid)
     except Exception as e:
         print(f"saved for session only: {str(e)[:100]}")
     print(f"connected: {n} · key ...{key[-4:]}")
@@ -209,7 +210,8 @@ def main():
         if task.startswith("/models"):
             from jhalcode import catalog as Cat
             _, _, v = task.partition(" ")
-            if "openrouter" in cfg.base_url:
+            pid = getattr(cfg, "provider", "") or os.environ.get("JHAL_PROVIDER", "")
+            if pid and pid != "zen":
                 import urllib.request, json
                 try:
                     req = urllib.request.Request(f"{cfg.base_url.rstrip('/')}/models",
@@ -256,10 +258,18 @@ def main():
             from jhalcode import team as Tm
             print(Tm.ACTIVE or "no specialists active")
             continue
+        if task == "/compact":
+            print(agent.compact())
+            continue
+        if task == "/cost":
+            print(agent.cost())
+            continue
         if task == "/status":
             who = getattr(agent, "role", None) or "solo"
             mid = getattr(agent, "model", cfg.model_list()[0])
-            print(f"who={who} model={mid} mode={'AUTO' if cfg.auto_mode else 'ASK'} turns={len(agent.messages)} audit={cfg.audit_log}")
+            prov = getattr(cfg, "provider", "zen")
+            print(f"who={who} model={mid} provider={prov} mode={'AUTO' if cfg.auto_mode else 'ASK'} turns={len(agent.messages)} audit={cfg.audit_log}")
+            print(f"theme={T.current_theme()} tokens={agent.cost()}")
             continue
         if task.startswith("/save"):
             _, _, v = task.partition(" ")
@@ -279,6 +289,14 @@ def main():
             continue
         if task == "/connect":
             _connect(cfg)
+            continue
+        if task.startswith("/theme"):
+            _, _, v = task.partition(" ")
+            v = v.strip()
+            if v:
+                print(f"theme: {v}" if T.set_theme(v) else f"unknown theme ({', '.join(sorted(T.list_themes()))})")
+            else:
+                print(f"themes: {', '.join(sorted(T.list_themes()))} (current: {T.current_theme()})")
             continue
         if task == "/update":
             import subprocess
@@ -306,8 +324,8 @@ def main():
             os.system("cls" if os.name == "nt" else "clear")
             continue
         if task in ("/help", "help"):
-            print("Tip: @file or @\"my file\" attaches contents. @folder lists it.")
-            print("/connect /manager /solo /roles /role add /agents /models [free] /auto /ask /model /status /save /load /audit /clear /quit")
+            print("Tip: @file attaches · @folder lists — Tab completes")
+            print("/connect /theme /manager /roles /role add /agents /models /model /compact /cost /status /save /load /audit /clear /quit")
             continue
         try:
             _run(agent, task)

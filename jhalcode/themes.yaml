@@ -1,0 +1,20 @@
+# Jhal Code themes. /theme <name> to switch. Brand default: jhal.
+themes:
+  jhal:
+    primary: "#E8291C"
+    accent: "#6BA53A"
+    text: "white"
+    dim: "grey62"
+    danger: "#FF4B3E"
+  ember:
+    primary: "#FF7A1A"
+    accent: "#FFC53D"
+    text: "white"
+    dim: "grey62"
+    danger: "#FF4B3E"
+  ghost:
+    primary: "#8AB4FF"
+    accent: "#7AE0C3"
+    text: "white"
+    dim: "grey62"
+    danger: "#FF6B6B"
