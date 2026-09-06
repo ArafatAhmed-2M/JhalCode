@@ -114,12 +114,23 @@ class JhalAgent:
 
     def _chat(self):
         models = [self.model] + [m for m in self.cfg.model_list() if m != self.model]
+        bad = getattr(self, "_demoted", {})
+        models = sorted(models, key=lambda m: bad.get(m, 0))
         errs = []
         for m in models:
             try:
                 c = ModelClient(self.cfg.base_url, self.cfg.api_key, m)
-                return c.chat(self.messages, self.defs)
+                out = c.chat(self.messages, self.defs)
+                if not hasattr(self, "_demoted"):
+                    self._demoted = {}
+                self._demoted[m] = 0
+                return out
             except Exception as e:
+                if not hasattr(self, "_demoted"):
+                    self._demoted = {}
+                self._demoted[m] = self._demoted.get(m, 0) + 1
+                if self._demoted[m] == 3:
+                    T.tool_line("fallback", f"{m} failed 3x — demoted for this session")
                 errs.append(f"{m}: {str(e)[:200]}")
         if any(k in e.lower() for e in errs for k in ("image input", "image_url", "does not support image", "no endpoints found that support image")):
             self._strip_images()
@@ -144,6 +155,25 @@ class JhalAgent:
                 if n_img:
                     text += f" [{n_img} image(s) could not be shown — work from file names]"
                 msg["content"] = text
+
+    def _test_hook(self, name: str, args: dict):
+        import os as _os
+        cmd = _os.environ.get("JHAL_TEST_CMD", "")
+        if not cmd or name not in ("write_file", "edit_file"):
+            return
+        p = str(args.get("path", ""))
+        if not p.endswith((".py", ".js", ".ts", ".tsx", ".jsx")) and "/src/" not in p and "/tests/" not in p:
+            return
+        T.tool_line("test-hook", cmd)
+        try:
+            from jhalcode.tools.shell import run_shell
+            r = run_shell(cmd, timeout=180)
+            out = str(r.get("output", ""))[-1500:]
+            ok = r.get("code", 1) == 0
+            T.tool_ok("test-hook", {"path": "PASS" if ok else "FAIL"}) if ok else T.tool_err(out[-200:])
+            self.messages.append({"role": "user", "content": f"[test-hook {'PASS' if ok else 'FAIL'} after {name} {p}]\n{out}"})
+        except Exception as e:
+            T.tool_err(str(e)[:150])
 
     def _exec_pc_tool(self, name: str, args: dict, call_id: str, pending: list | None = None):
         reason = perm.blocked_reason(name, args)
@@ -172,6 +202,7 @@ class JhalAgent:
             T.tool_err(res["error"])
         else:
             T.tool_ok(name, res if isinstance(res, dict) else {})
+            self._test_hook(name, args)
         if pending is not None and not self._vision_off and name == "screenshot" and "error" not in res and isinstance(res.get("path"), str):
             import os as _os
             if _os.path.isfile(res["path"]):
@@ -219,6 +250,12 @@ class JhalAgent:
             u = resp.get("usage") or {}
             self._usage["prompt_tokens"] += u.get("prompt_tokens", 0)
             self._usage["completion_tokens"] += u.get("completion_tokens", 0)
+            total = self._usage["prompt_tokens"] + self._usage["completion_tokens"]
+            if self.cfg.max_tokens and total >= self.cfg.max_tokens:
+                T.tool_err(f"token budget hit ({total}/{self.cfg.max_tokens}) — stopping")
+                return f"stopped: token budget {self.cfg.max_tokens} exceeded"
+            elif self.cfg.max_tokens and total >= self.cfg.max_tokens * 0.8:
+                T.tool_line("budget", f"{total}/{self.cfg.max_tokens} tokens used")
             choices = resp.get("choices") or []
             if not choices:
                 return "empty response from model"
@@ -230,10 +267,10 @@ class JhalAgent:
                 log(self.cfg.audit_log, {"event": "done", "output": out})
                 import time as _t2
                 dt = _t2.time() - t0
-                total = self._usage['prompt_tokens'] + self._usage['completion_tokens']
-                stats = f"{dt:.1f}s · {total} tokens"
+                tot = self._usage['prompt_tokens'] + self._usage['completion_tokens']
+                stats = f"{dt:.1f}s · {tot} tokens"
                 T.assistant(out, stats)
-                T._status_bar(self.model, total, dt)
+                T._status_bar(self.model, tot, dt)
                 return out
             parsed = []
             for c in calls:

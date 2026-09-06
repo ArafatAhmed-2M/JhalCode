@@ -85,7 +85,28 @@ def blocked_reason(tool: str, args: dict) -> str | None:
                 return f"protected path: {d}"
     return None
 
+CRITICAL_SHELL = ("rm -rf /", "rm -rf ~", "del /s /q c:", ":(){", "mkfs", "dd if=",
+                  "shutdown", "poweroff", "reboot", "reg delete hklm", "vssadmin delete")
+
+def is_critical(tool: str, args: dict) -> bool:
+    if tool == "run_shell":
+        cmd = str(args.get("command", "")).lower()
+        if any(h in cmd for h in CRITICAL_SHELL):
+            return True
+    if tool in ("write_file", "edit_file"):
+        p = str(args.get("path", "")).lower()
+        if any(k in p for k in ("server.js", "package.json", ".env", "config")) and tool == "write_file":
+            return False
+        if any(k in cmd_or_empty(args) for k in ("rm ", "del ", "remove-item")):
+            return True
+    return False
+
+def cmd_or_empty(args: dict) -> str:
+    return str(args.get("command", "")).lower()
+
 def needs_approval(tool: str, args: dict, auto_mode: bool) -> bool:
+    if is_critical(tool, args):
+        return True
     if auto_mode:
         return False
     return risk_of(tool, args) in ("medium", "high")

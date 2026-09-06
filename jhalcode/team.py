@@ -33,7 +33,7 @@ ADD_ROLE_DEF = {"type": "function", "function": {"name": "add_role", "descriptio
 
 def role_defs(roles: dict, name: str) -> list:
     want = set((roles.get(name) or {}).get("tools", []))
-    return [d for d in ALL_DEFS if d["function"]["name"] in want and d["function"]["name"] in ("read_file", "list_dir", "run_shell", "write_file", "edit_file", "grep", "glob", "web_search", "webfetch", "open_file", "screenshot", "browser_open", "todo", "plan", "symbols", "diagnose", "refs", "question")]
+    return [d for d in ALL_DEFS if d["function"]["name"] in want and d["function"]["name"] in ("read_file", "list_dir", "run_shell", "run_bg", "bg_kill", "write_file", "edit_file", "grep", "glob", "web_search", "webfetch", "open_file", "screenshot", "browser_open", "todo", "plan", "symbols", "diagnose", "refs", "question")]
 
 def run_specialist(roles: dict, cfg, role: str, task: str, depth: int = 0, images: list | None = None) -> dict:
     from jhalcode.models import image_part

@@ -37,6 +37,7 @@ class JhalConfig:
     provider: str = field(default_factory=lambda: os.getenv("JHAL_PROVIDER", "zen"))
     auto_mode: bool = field(default_factory=lambda: os.getenv("JHAL_AUTO", "0").strip().lower() in ("1", "true", "yes"))
     max_steps: int = field(default_factory=lambda: _int(os.getenv("JHAL_MAX_STEPS", "30"), 30, 1, 200))
+    max_tokens: int = field(default_factory=lambda: _int(os.getenv("JHAL_MAX_TOKENS", "0"), 0, 0, 100_000_000))
     workdir: str = field(default_factory=lambda: os.getenv("JHAL_WORKDIR", os.getcwd()))
     audit_log: str = field(default_factory=lambda: os.getenv("JHAL_AUDIT", "jhal-audit.jsonl"))
 

@@ -9,7 +9,7 @@ def _path():
             return p
     return cands[0] if os.path.isdir(os.getcwd()) else cands[1]
 
-KNOWN_TOOLS = {"run_shell", "list_dir", "read_file", "write_file", "edit_file", "grep", "glob",
+KNOWN_TOOLS = {"run_shell", "run_bg", "bg_kill", "list_dir", "read_file", "write_file", "edit_file", "grep", "glob",
                "screenshot", "mouse_move", "mouse_click", "key_press", "key_type", "browser_open",
                "browser_act", "web_search", "webfetch", "open_file", "question", "todo", "plan",
                "symbols", "diagnose", "refs", "delegate", "add_role", "all"}
