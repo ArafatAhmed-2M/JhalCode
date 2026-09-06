@@ -320,8 +320,17 @@ def main():
             except Exception as e:
                 print(f"no audit: {e}")
             continue
+        if task == "/init":
+            p = os.path.join(os.getcwd(), "JHAL.md")
+            if os.path.isfile(p):
+                print(f"already exists: {p}")
+            else:
+                open(p, "w", encoding="utf-8").write("# Jhal Code — Project rules\n\n- Stack:\n- Conventions:\n- Do not touch:\n")
+                print(f"created {p} — edit it to teach Jhal your project")
+            continue
         if task == "/clear":
             os.system("cls" if os.name == "nt" else "clear")
+            T.banner(cfg.auto_mode, getattr(agent, "model", cfg.model_list()[0]))
             continue
         if task in ("/help", "help"):
             print("Tip: @file attaches · @folder lists — Tab completes")

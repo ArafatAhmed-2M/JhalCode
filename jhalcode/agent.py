@@ -230,8 +230,10 @@ class JhalAgent:
                 log(self.cfg.audit_log, {"event": "done", "output": out})
                 import time as _t2
                 dt = _t2.time() - t0
-                stats = f"{dt:.1f}s · {self._usage['prompt_tokens'] + self._usage['completion_tokens']} tokens"
+                total = self._usage['prompt_tokens'] + self._usage['completion_tokens']
+                stats = f"{dt:.1f}s · {total} tokens"
                 T.assistant(out, stats)
+                T._status_bar(self.model, total, dt)
                 return out
             parsed = []
             for c in calls:

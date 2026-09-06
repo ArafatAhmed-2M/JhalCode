@@ -119,6 +119,27 @@ def _wordmark():
 
 CMDS = "/connect /theme /manager /roles /models /model /compact /cost /status /save /audit /clear /quit"
 
+def _recent_activity(n: int = 3) -> str:
+    import os, json
+    from collections import deque
+    p = os.path.join(os.getcwd(), "jhal-audit.jsonl")
+    if not os.path.isfile(p):
+        return "No recent activity"
+    try:
+        with open(p, encoding="utf-8") as f:
+            rows = list(deque(f, 20))
+        out = []
+        for r in rows[-n:]:
+            try:
+                j = json.loads(r)
+                t = j.get("tool", j.get("event", "?"))
+                out.append(f"· {t}")
+            except Exception:
+                pass
+        return "\n".join(out) if out else "No recent activity"
+    except Exception:
+        return "No recent activity"
+
 def banner(auto: bool, model: str):
     import os
     from jhalcode import __version__ as _v
@@ -127,9 +148,17 @@ def banner(auto: bool, model: str):
     if RICH:
         import random
         from rich.text import Text
+        from rich.table import Table
+        from rich.align import Align
         for l in _load("logo_name.txt") or ["Jhal Code"]:
             console.print(Text(l.rstrip() or " ", style=f"bold {RED}"), justify="center")
-        console.print(Panel(f"[bold {RED}]Jhal Code[/] [dim]{ver}  ·  {sub}[/]\n[dim]{random.choice(TIPS)} · /help for commands[/]", box=box.ROUNDED, border_style=RED))
+        left = f"[bold {RED}]Jhal Code[/] [dim]{ver}[/]\n[dim]{sub}[/]\n\n[bold]Welcome back![/]\n[dim]Tip: {random.choice(TIPS)}[/]"
+        right = f"[bold {RED}]Tips for getting started[/]\n[dim]Run /init to set up project rules\nRun /theme to change look\nRun /manager for team mode[/]\n\n[bold {RED}]Recent activity[/]\n[dim]{_recent_activity()}[/]"
+        grid = Table.grid(expand=True)
+        grid.add_column(ratio=1)
+        grid.add_column(ratio=1)
+        grid.add_row(Panel(left, border_style="dim", box=box.ROUNDED), Panel(right, border_style="dim", box=box.ROUNDED))
+        console.print(Panel(grid, title=f"[bold {RED}]Jhal Code[/] [dim]{ver}[/]", border_style=RED, box=box.ROUNDED))
     else:
         print(f"{C['r']}{C['b']}JHAL CODE {ver}{C['x']} {C['dim']}{sub}{C['x']}")
 
@@ -149,6 +178,13 @@ def echo_user(text: str):
         console.print(Text.assemble(("you ❯ ", "bold cyan"), (text, "")), style="on grey11")
     else:
         print(f"\n{C['b']}you ❯ {C['x']}{text}")
+
+def _status_bar(model: str, tokens: int, elapsed: float):
+    if RICH:
+        from rich.text import Text
+        console.print(Text(f" {model} · {tokens} tokens · {elapsed:.1f}s ", style="dim"), justify="right")
+    else:
+        print(f"[{model} · {tokens} · {elapsed:.1f}s]")
 
 def assistant(text: str, stats: str = ""):
     if RICH:
@@ -230,6 +266,7 @@ except Exception:
 COMMANDS = {
     "/connect": "connect provider API key",
     "/theme": "switch theme",
+    "/init": "create JHAL.md rules",
     "/compact": "summarize and shrink context",
     "/cost": "show token usage",
     "/manager": "orchestrate specialist team",
